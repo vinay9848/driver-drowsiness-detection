@@ -256,52 +256,93 @@ async function startCamera() {
   canvas.height = video.videoHeight;
 }
 
-async function fetchIpLocation() {
-  try {
-    const res = await fetch('https://ipapi.co/json/');
-    if (res.ok) {
-      const d = await res.json();
-      if (d && d.latitude && d.longitude) {
-        lastGps = {
-          lat: d.latitude,
-          lon: d.longitude,
-          accuracy: 5000,
-          source: `ip:${d.city || 'unknown'}`,
-        };
-        console.log('IP location (ipapi.co):', d.city, d.latitude, d.longitude);
-        return;
-      }
-    }
-  } catch (e) {
-    console.warn('ipapi.co failed:', e.message);
-  }
+const IP_SERVICES = [
+  {
+    name: 'ipapi.co',
+    url: 'https://ipapi.co/json/',
+    parse: d => (d && d.latitude && d.longitude) ? { lat: d.latitude, lon: d.longitude, city: d.city } : null,
+  },
+  {
+    name: 'ipwho.is',
+    url: 'https://ipwho.is/',
+    parse: d => (d && d.success && d.latitude && d.longitude) ? { lat: d.latitude, lon: d.longitude, city: d.city } : null,
+  },
+  {
+    name: 'freeipapi',
+    url: 'https://freeipapi.com/api/json',
+    parse: d => (d && d.latitude && d.longitude) ? { lat: d.latitude, lon: d.longitude, city: d.cityName } : null,
+  },
+  {
+    name: 'geolocation-db',
+    url: 'https://geolocation-db.com/json/',
+    parse: d => (d && d.latitude && d.longitude && d.latitude !== 'Not found') ? { lat: parseFloat(d.latitude), lon: parseFloat(d.longitude), city: d.city } : null,
+  },
+];
 
-  try {
-    const res = await fetch('https://ipwho.is/');
-    if (res.ok) {
-      const d = await res.json();
-      if (d && d.success && d.latitude && d.longitude) {
-        lastGps = {
-          lat: d.latitude,
-          lon: d.longitude,
-          accuracy: 5000,
-          source: `ip:${d.city || 'unknown'}`,
-        };
-        console.log('IP location (ipwho.is):', d.city, d.latitude, d.longitude);
-        return;
-      }
-    }
-  } catch (e) {
-    console.warn('ipwho.is failed:', e.message);
+function updateLocationDisplay() {
+  const el = document.getElementById('location');
+  if (!el) return;
+  if (!lastGps) {
+    el.textContent = 'searching…';
+    el.style.color = '#9aa3b8';
+    return;
   }
-
-  console.warn('All IP location services failed — no fallback location');
+  if (lastGps.source === 'gps') {
+    el.textContent = `gps ✓`;
+    el.style.color = '#4ade80';
+  } else {
+    el.textContent = lastGps.source.replace('ip:', '');
+    el.style.color = '#fbbf24';
+  }
 }
 
-function startGps() {
-  fetchIpLocation();
+async function fetchIpLocation() {
+  for (const svc of IP_SERVICES) {
+    try {
+      const res = await fetch(svc.url);
+      if (!res.ok) {
+        console.warn(`${svc.name}: HTTP ${res.status}`);
+        continue;
+      }
+      const d = await res.json();
+      const result = svc.parse(d);
+      if (result) {
+        lastGps = {
+          lat: result.lat,
+          lon: result.lon,
+          accuracy: 5000,
+          source: `ip:${result.city || 'unknown'}`,
+        };
+        console.log(`IP location (${svc.name}):`, result.city, result.lat, result.lon);
+        updateLocationDisplay();
+        return true;
+      }
+      console.warn(`${svc.name}: no usable data`);
+    } catch (e) {
+      console.warn(`${svc.name} failed:`, e.message);
+    }
+  }
+  return false;
+}
 
-  if (!('geolocation' in navigator)) return;
+async function startGps() {
+  updateLocationDisplay();
+
+  let ipOk = await fetchIpLocation();
+  if (!ipOk) {
+    setTimeout(async () => {
+      ipOk = await fetchIpLocation();
+      if (!ipOk) {
+        setTimeout(() => fetchIpLocation(), 10000);
+      }
+    }, 5000);
+  }
+
+  if (!('geolocation' in navigator)) {
+    console.warn('navigator.geolocation not available');
+    return;
+  }
+
   navigator.geolocation.watchPosition(
     pos => {
       lastGps = {
@@ -311,8 +352,17 @@ function startGps() {
         source: 'gps',
       };
       console.log('GPS upgrade:', pos.coords.latitude, pos.coords.longitude);
+      updateLocationDisplay();
+      const banner = document.getElementById('gpsWarning');
+      if (banner) banner.classList.add('hidden');
     },
-    err => console.warn('Browser GPS unavailable:', err.message, '— using IP fallback'),
+    err => {
+      console.warn('Browser GPS error:', err.code, err.message);
+      const banner = document.getElementById('gpsWarning');
+      if (banner && err.code === err.PERMISSION_DENIED) {
+        banner.classList.remove('hidden');
+      }
+    },
     { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
   );
 }

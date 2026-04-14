@@ -12,6 +12,10 @@
     ⚠ <strong>Backend not configured.</strong> Cross-device sync disabled — see <code>firebase-config.js</code>.
   </div>
 
+  <div id="gpsWarning" class="setup-warning hidden">
+    ⚠ <strong>Location permission denied.</strong> The map will show an approximate location based on your IP address. To share precise location, allow location access in your browser settings (lock icon in the address bar).
+  </div>
+
   <header>
     <h1>Driver Drowsiness Detection</h1>
     <p id="status" class="status idle">Idle</p>
@@ -33,8 +37,12 @@
         <span id="mar" class="value">&mdash;</span>
       </div>
       <div class="metric">
-        <span class="label">Closed frames</span>
-        <span id="closed" class="value">0</span>
+        <span class="label">Eyes</span>
+        <span id="closed" class="value">&mdash;</span>
+      </div>
+      <div class="metric">
+        <span class="label">Location</span>
+        <span id="location" class="value value-small">searching&hellip;</span>
       </div>
     </div>
 

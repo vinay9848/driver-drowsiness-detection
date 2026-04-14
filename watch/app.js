@@ -111,6 +111,8 @@ function applyState(state) {
     }
     const src = state.gps.source ? ` · ${state.gps.source}` : '';
     elGpsInfo.textContent = `${state.gps.lat.toFixed(5)}, ${state.gps.lon.toFixed(5)}${src}`;
+  } else {
+    elGpsInfo.textContent = 'Driver has no location data — check permissions or IP service availability';
   }
 }
 
