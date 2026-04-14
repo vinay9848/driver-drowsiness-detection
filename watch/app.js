@@ -1,3 +1,5 @@
+import { firebaseConfig, SESSION_ID } from '../firebase-config.js';
+
 const STAGE_GAUGE = {
   idle: 0,
   watching: 10,
@@ -65,6 +67,7 @@ function fmtNum(v) {
 }
 
 function applyState(state) {
+  if (!state) return;
   const stage = state.stage || 'idle';
   elStageVal.textContent = stage;
   elEarVal.textContent   = fmtNum(state.ear);
@@ -120,22 +123,59 @@ function renderIncident(inc) {
 }
 
 function addIncident(inc) {
+  if (!inc) return;
   const empty = elIncidents.querySelector('.empty');
   if (empty) empty.remove();
   elIncidents.prepend(renderIncident(inc));
 }
 
-const channel = new BroadcastChannel('drowsiness-v1');
-channel.onmessage = (e) => {
-  const msg = e.data;
-  if (msg.type === 'state') {
-    lastStateAt = Date.now();
-    setConnection('driver active', true);
-    applyState(msg.data);
-  } else if (msg.type === 'incident') {
-    addIncident(msg.data);
-  }
-};
+initMap();
+
+const firebaseConfigured =
+  firebaseConfig &&
+  firebaseConfig.apiKey &&
+  !firebaseConfig.apiKey.startsWith('YOUR_');
+
+if (firebaseConfigured) {
+  const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js');
+  const { getDatabase, ref, onValue, onChildAdded } = await import('https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js');
+
+  const fbApp = initializeApp(firebaseConfig);
+  const db = getDatabase(fbApp);
+  const stateRef = ref(db, `sessions/${SESSION_ID}/state`);
+  const incidentsRef = ref(db, `sessions/${SESSION_ID}/incidents`);
+
+  onValue(stateRef, (snap) => {
+    const data = snap.val();
+    if (data) {
+      lastStateAt = Date.now();
+      setConnection('driver active', true);
+      applyState(data);
+    }
+  });
+
+  onChildAdded(incidentsRef, (snap) => {
+    addIncident(snap.val());
+  });
+
+  setConnection('waiting for driver', false);
+  console.log('Sync: Firebase Realtime Database, session:', SESSION_ID);
+} else {
+  const ch = new BroadcastChannel('drowsiness-v1');
+  ch.onmessage = (e) => {
+    const msg = e.data;
+    if (msg.type === 'state') {
+      lastStateAt = Date.now();
+      setConnection('driver active', true);
+      applyState(msg.data);
+    } else if (msg.type === 'incident') {
+      addIncident(msg.data);
+    }
+  };
+  setConnection('waiting for driver (same-device only)', false);
+  console.warn('Sync: BroadcastChannel (Firebase not configured — same-device only)');
+  document.getElementById('setupWarning').classList.remove('hidden');
+}
 
 setInterval(() => {
   if (lastStateAt === 0) return;
@@ -143,6 +183,3 @@ setInterval(() => {
     setConnection('driver offline', false);
   }
 }, 1000);
-
-initMap();
-setConnection('waiting for driver', false);

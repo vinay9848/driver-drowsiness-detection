@@ -1,3 +1,5 @@
+import { firebaseConfig, SESSION_ID } from '../firebase-config.js';
+
 const EAR_THRESHOLD = 0.22;
 const MAR_THRESHOLD = 0.6;
 
@@ -7,8 +9,7 @@ const EXTERNAL_AFTER_MS = 10000;
 const RECOVERY_AFTER_MS = 2000;
 
 const NO_FACE_DROWSY_MS = 2000;
-
-const PUSH_INTERVAL_MS = 1000;
+const PUSH_INTERVAL_MS  = 1000;
 
 const LEFT_EYE  = [362, 385, 387, 263, 373, 380];
 const RIGHT_EYE = [33,  160, 158, 133, 153, 144];
@@ -25,7 +26,35 @@ const STAGE = {
   EXTERNAL: 'external',
 };
 
-const channel = new BroadcastChannel('drowsiness-v1');
+const firebaseConfigured =
+  firebaseConfig &&
+  firebaseConfig.apiKey &&
+  !firebaseConfig.apiKey.startsWith('YOUR_');
+
+let sync;
+
+if (firebaseConfigured) {
+  const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js');
+  const { getDatabase, ref, set, push } = await import('https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js');
+  const fbApp = initializeApp(firebaseConfig);
+  const db = getDatabase(fbApp);
+  const stateRef = ref(db, `sessions/${SESSION_ID}/state`);
+  const incidentsRef = ref(db, `sessions/${SESSION_ID}/incidents`);
+
+  sync = {
+    sendState: (data) => set(stateRef, data).catch(e => console.warn('state push failed:', e.message)),
+    sendIncident: (data) => push(incidentsRef, data).catch(e => console.warn('incident push failed:', e.message)),
+  };
+  console.log('Sync: Firebase Realtime Database, session:', SESSION_ID);
+} else {
+  const ch = new BroadcastChannel('drowsiness-v1');
+  sync = {
+    sendState: (data) => ch.postMessage({ type: 'state', data }),
+    sendIncident: (data) => ch.postMessage({ type: 'incident', data }),
+  };
+  console.warn('Sync: BroadcastChannel (Firebase not configured — same-device only)');
+  document.getElementById('setupWarning').classList.remove('hidden');
+}
 
 const video    = document.getElementById('video');
 const canvas   = document.getElementById('overlay');
@@ -223,20 +252,44 @@ async function startCamera() {
 
 async function fetchIpLocation() {
   try {
-    const res = await fetch('https://ip-api.com/json');
-    const data = await res.json();
-    if (data.status === 'success') {
-      lastGps = {
-        lat: data.lat,
-        lon: data.lon,
-        accuracy: 5000,
-        source: `ip:${data.city}`,
-      };
-      console.log('IP location:', data.city, data.lat, data.lon);
+    const res = await fetch('https://ipapi.co/json/');
+    if (res.ok) {
+      const d = await res.json();
+      if (d && d.latitude && d.longitude) {
+        lastGps = {
+          lat: d.latitude,
+          lon: d.longitude,
+          accuracy: 5000,
+          source: `ip:${d.city || 'unknown'}`,
+        };
+        console.log('IP location (ipapi.co):', d.city, d.latitude, d.longitude);
+        return;
+      }
     }
   } catch (e) {
-    console.warn('IP location failed:', e.message);
+    console.warn('ipapi.co failed:', e.message);
   }
+
+  try {
+    const res = await fetch('https://ipwho.is/');
+    if (res.ok) {
+      const d = await res.json();
+      if (d && d.success && d.latitude && d.longitude) {
+        lastGps = {
+          lat: d.latitude,
+          lon: d.longitude,
+          accuracy: 5000,
+          source: `ip:${d.city || 'unknown'}`,
+        };
+        console.log('IP location (ipwho.is):', d.city, d.latitude, d.longitude);
+        return;
+      }
+    }
+  } catch (e) {
+    console.warn('ipwho.is failed:', e.message);
+  }
+
+  console.warn('All IP location services failed — no fallback location');
 }
 
 function startGps() {
@@ -260,15 +313,13 @@ function startGps() {
 
 function pushState() {
   if (!running) return;
-  channel.postMessage({
-    type: 'state',
-    data: {
-      stage,
-      ear: lastEar,
-      mar: lastMar,
-      gps: lastGps,
-      sessionTime: sessionStartTime ? (performance.now() - sessionStartTime) / 1000 : 0,
-    },
+  sync.sendState({
+    stage,
+    ear: lastEar,
+    mar: lastMar,
+    gps: lastGps,
+    sessionTime: sessionStartTime ? (performance.now() - sessionStartTime) / 1000 : 0,
+    lastUpdate: Date.now(),
   });
 }
 
@@ -286,18 +337,15 @@ function captureAndPushIncident() {
     snapshot = c.toDataURL('image/jpeg', 0.6);
   }
 
-  channel.postMessage({
-    type: 'incident',
-    data: {
-      id: `inc-${Date.now()}`,
-      timestamp: Date.now() / 1000,
-      stage: 'external',
-      ear: lastEar,
-      mar: lastMar,
-      gps: lastGps,
-      sessionTime: sessionStartTime ? (performance.now() - sessionStartTime) / 1000 : 0,
-      snapshot,
-    },
+  sync.sendIncident({
+    id: `inc-${Date.now()}`,
+    timestamp: Date.now() / 1000,
+    stage: 'external',
+    ear: lastEar,
+    mar: lastMar,
+    gps: lastGps,
+    sessionTime: sessionStartTime ? (performance.now() - sessionStartTime) / 1000 : 0,
+    snapshot,
   });
 }
 

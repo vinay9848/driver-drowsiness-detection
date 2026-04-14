@@ -8,6 +8,10 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="setupWarning" class="setup-warning hidden">
+    ⚠ <strong>Backend not configured.</strong> Cross-device sync disabled — see <code>firebase-config.js</code>.
+  </div>
+
   <header>
     <h1>Driver Drowsiness Detection</h1>
     <p id="status" class="status idle">Idle</p>
@@ -40,6 +44,6 @@
   <audio id="alarm" src="assets/alarm.mp3" preload="auto" loop></audio>
 
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

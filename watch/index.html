@@ -9,6 +9,10 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="setupWarning" class="setup-warning hidden">
+    ⚠ <strong>Backend not configured.</strong> This dashboard will only receive updates from a driver tab in the <em>same browser on the same device</em>. To enable cross-device sync, set up Firebase in <code>firebase-config.js</code>.
+  </div>
+
   <header>
     <h1>Driver Watch</h1>
     <div id="connection" class="connection offline">waiting for driver</div>
@@ -54,6 +58,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
