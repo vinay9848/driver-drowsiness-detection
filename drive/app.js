@@ -35,11 +35,17 @@ let sync;
 
 if (firebaseConfigured) {
   const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js');
-  const { getDatabase, ref, set, push } = await import('https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js');
+  const { getDatabase, ref, set, push, onDisconnect } = await import('https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js');
   const fbApp = initializeApp(firebaseConfig);
   const db = getDatabase(fbApp);
   const stateRef = ref(db, `sessions/${SESSION_ID}/state`);
   const incidentsRef = ref(db, `sessions/${SESSION_ID}/incidents`);
+
+  onDisconnect(stateRef).set({
+    driverOffline: true,
+    stage: 'offline',
+    lastUpdate: Date.now(),
+  });
 
   sync = {
     sendState: (data) => set(stateRef, data).catch(e => console.warn('state push failed:', e.message)),

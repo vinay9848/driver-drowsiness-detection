@@ -16,7 +16,7 @@ const STAGE_SUB = {
   external: 'EMERGENCY — driver unresponsive',
 };
 
-const OFFLINE_AFTER_MS = 5000;
+const OFFLINE_AFTER_MS = 3000;
 
 let map = null;
 let marker = null;
@@ -66,8 +66,26 @@ function fmtNum(v) {
   return (v === null || v === undefined) ? '—' : v.toFixed(3);
 }
 
+function showOffline() {
+  setConnection('driver offline', false);
+  elBigStatus.textContent = 'OFFLINE';
+  elStatusSub.textContent = 'Driver disconnected';
+  elStatusCard.className = 'status-card stage-idle';
+  elStageVal.textContent = 'offline';
+  elEarVal.textContent = '—';
+  elMarVal.textContent = '—';
+  elSessionVal.textContent = '—';
+  updateGauge(0);
+}
+
 function applyState(state) {
   if (!state) return;
+
+  if (state.driverOffline || state.stage === 'offline') {
+    showOffline();
+    return;
+  }
+
   const stage = state.stage || 'idle';
   elStageVal.textContent = stage;
   elEarVal.textContent   = fmtNum(state.ear);
@@ -180,6 +198,6 @@ if (firebaseConfigured) {
 setInterval(() => {
   if (lastStateAt === 0) return;
   if (Date.now() - lastStateAt > OFFLINE_AFTER_MS) {
-    setConnection('driver offline', false);
+    showOffline();
   }
 }, 1000);
