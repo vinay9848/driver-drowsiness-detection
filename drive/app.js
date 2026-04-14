@@ -307,21 +307,95 @@ const IP_SERVICES = [
   },
 ];
 
-function updateLocationDisplay() {
-  const el = document.getElementById('location');
-  if (!el) return;
-  if (!lastGps) {
-    el.textContent = 'searching…';
-    el.style.color = '#9aa3b8';
-    return;
-  }
-  if (lastGps.source === 'gps') {
-    el.textContent = `gps ✓`;
-    el.style.color = '#4ade80';
+let driverMap = null;
+let driverMarker = null;
+let driverMapCentered = false;
+
+function initDriverMap() {
+  if (!window.L || driverMap) return;
+  driverMap = L.map('driverMap', { zoomControl: true, attributionControl: false }).setView([20.5937, 78.9629], 4);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(driverMap);
+  driverMap.on('click', (e) => {
+    setManualLocation(e.latlng.lat, e.latlng.lng, true);
+  });
+}
+
+function placeDriverMarker(lat, lon) {
+  if (!driverMap) return;
+  const ll = [lat, lon];
+  if (!driverMarker) {
+    driverMarker = L.marker(ll, { draggable: true }).addTo(driverMap);
+    driverMarker.on('dragend', (e) => {
+      const pos = e.target.getLatLng();
+      setManualLocation(pos.lat, pos.lng, false);
+    });
   } else {
-    el.textContent = lastGps.source.replace('ip:', '');
-    el.style.color = '#fbbf24';
+    driverMarker.setLatLng(ll);
   }
+  if (!driverMapCentered) {
+    driverMap.setView(ll, 13);
+    driverMapCentered = true;
+  }
+}
+
+function setManualLocation(lat, lon, panTo) {
+  lastGps = { lat, lon, accuracy: 0, source: 'manual' };
+  localStorage.setItem('drowsiness-manual-location', JSON.stringify({ lat, lon }));
+  placeDriverMarker(lat, lon);
+  if (panTo && driverMap) driverMap.setView([lat, lon], Math.max(driverMap.getZoom(), 13));
+  updateLocationDisplay();
+  console.log('Manual location set:', lat, lon);
+}
+
+function loadSavedManualLocation() {
+  const saved = localStorage.getItem('drowsiness-manual-location');
+  if (!saved) return false;
+  try {
+    const { lat, lon } = JSON.parse(saved);
+    if (typeof lat === 'number' && typeof lon === 'number') {
+      lastGps = { lat, lon, accuracy: 0, source: 'manual' };
+      placeDriverMarker(lat, lon);
+      console.log('Loaded saved manual location:', lat, lon);
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+
+function updateLocationDisplay() {
+  const sourceEl = document.getElementById('locationSource');
+  const tileEl = document.getElementById('location');
+
+  let label = 'searching…';
+  let color = '#9aa3b8';
+
+  if (lastGps) {
+    if (lastGps.source === 'gps') {
+      label = 'device GPS ✓';
+      color = '#4ade80';
+    } else if (lastGps.source === 'manual') {
+      label = 'manual pin';
+      color = '#3b82f6';
+    } else {
+      label = `IP · ${(lastGps.source || '').replace('ip:', '')}`;
+      color = '#fbbf24';
+    }
+  }
+
+  if (sourceEl) {
+    sourceEl.textContent = label;
+    sourceEl.style.color = color;
+  }
+  if (tileEl) {
+    tileEl.textContent = lastGps
+      ? (lastGps.source === 'gps' ? 'gps ✓'
+        : lastGps.source === 'manual' ? 'manual'
+        : (lastGps.source || '').replace('ip:', ''))
+      : 'searching…';
+    tileEl.style.color = color;
+  }
+
+  if (lastGps) placeDriverMarker(lastGps.lat, lastGps.lon);
 }
 
 async function fetchIpLocation() {
@@ -354,16 +428,19 @@ async function fetchIpLocation() {
 }
 
 async function startGps() {
-  updateLocationDisplay();
+  const hasManual = lastGps && lastGps.source === 'manual';
 
-  let ipOk = await fetchIpLocation();
-  if (!ipOk) {
-    setTimeout(async () => {
-      ipOk = await fetchIpLocation();
-      if (!ipOk) {
-        setTimeout(() => fetchIpLocation(), 10000);
-      }
-    }, 5000);
+  if (!hasManual) {
+    let ipOk = await fetchIpLocation();
+    if (!ipOk) {
+      setTimeout(async () => {
+        if (lastGps && lastGps.source === 'manual') return;
+        ipOk = await fetchIpLocation();
+        if (!ipOk) setTimeout(() => {
+          if (!lastGps || lastGps.source !== 'manual') fetchIpLocation();
+        }, 10000);
+      }, 5000);
+    }
   }
 
   if (!('geolocation' in navigator)) {
@@ -373,6 +450,7 @@ async function startGps() {
 
   navigator.geolocation.watchPosition(
     pos => {
+      if (lastGps && lastGps.source === 'manual') return;
       lastGps = {
         lat: pos.coords.latitude,
         lon: pos.coords.longitude,
@@ -394,6 +472,35 @@ async function startGps() {
     { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
   );
 }
+
+document.getElementById('useGpsBtn').addEventListener('click', () => {
+  if (!('geolocation' in navigator)) {
+    alert('Geolocation is not supported by this browser.');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      localStorage.removeItem('drowsiness-manual-location');
+      lastGps = {
+        lat: pos.coords.latitude,
+        lon: pos.coords.longitude,
+        accuracy: pos.coords.accuracy,
+        source: 'gps',
+      };
+      driverMapCentered = false;
+      updateLocationDisplay();
+      console.log('Device GPS:', pos.coords.latitude, pos.coords.longitude);
+    },
+    err => {
+      alert(`Could not get device GPS: ${err.message}\n\nClick on the map to set your location manually instead.`);
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+});
+
+initDriverMap();
+loadSavedManualLocation();
+updateLocationDisplay();
 
 function pushState() {
   if (!running) return;

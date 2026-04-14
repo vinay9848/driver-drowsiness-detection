@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta name="theme-color" content="#0a0e1a">
   <title>Driver Drowsiness Detection</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -50,12 +52,23 @@
       </div>
     </div>
 
+    <section class="location-picker">
+      <div class="location-header">
+        <span class="location-source-label">Source: <span id="locationSource">searching&hellip;</span></span>
+        <button id="useGpsBtn" class="link-btn">Use device GPS</button>
+      </div>
+      <div id="driverMap" class="driver-map"></div>
+      <p class="location-hint">Tap (or drag the pin) to set your exact location if the auto-detected one is wrong.</p>
+    </section>
+
     <button id="startBtn" class="start-btn">Start monitoring</button>
   </main>
 
   <audio id="alarm" src="assets/alarm.mp3" preload="auto" loop></audio>
 
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
