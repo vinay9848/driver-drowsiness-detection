@@ -12,7 +12,7 @@
   border-radius: 8px;
   font-size: 0.85rem;
   line-height: 1.4;
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto 16px;
 }
 .setup-warning.hidden { display: none; }
@@ -31,149 +31,193 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto 20px;
 }
 
 h1 {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 700;
 }
 
-.connection {
-  font-size: 0.75rem;
+.fleet-stats {
+  font-size: 0.9rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  padding: 6px 14px;
+  color: #9aa3b8;
+  background: #1a1f2e;
+  padding: 8px 16px;
   border-radius: 999px;
+  border: 1px solid #2a3144;
 }
 
-.connection.online  { background: #1f3a2a; color: #4ade80; }
-.connection.offline { background: #4a1a1a; color: #f87171; }
+.fleet-stats .danger {
+  color: #f87171;
+  font-weight: 700;
+}
 
 main {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cards-section h2,
+.map-section h2,
+.incidents-section h2 {
+  font-size: 0.78rem;
+  color: #9aa3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 12px;
+}
+
+.cards-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
 }
 
-.status-card {
-  grid-column: 1 / -1;
-  padding: 32px;
-  border-radius: 14px;
+.empty {
+  background: #1a1f2e;
+  border: 1px dashed #2a3144;
+  padding: 28px;
+  border-radius: 10px;
   text-align: center;
-  border: 2px solid transparent;
-  transition: background 0.3s, border-color 0.3s;
+  color: #6b7280;
+  font-size: 0.88rem;
+  grid-column: 1 / -1;
 }
 
-.status-card.stage-idle      { background: #1a1f2e; border-color: #2a3144; }
-.status-card.stage-watching  { background: #14271c; border-color: #1f3a2a; }
-.status-card.stage-soft      { background: #2a2210; border-color: #5a4a18; }
-.status-card.stage-hard      { background: #3a1212; border-color: #6a1c1c; animation: pulse 0.8s infinite; }
-.status-card.stage-external  { background: #4a0e0e; border-color: #8a1010; animation: pulse 0.5s infinite; }
+.empty code {
+  background: rgba(255,255,255,0.05);
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #9aa3b8;
+}
+
+.driver-card {
+  background: #1a1f2e;
+  border-left: 6px solid #2a3144;
+  padding: 16px;
+  border-radius: 10px;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.driver-card.stage-idle      { border-left-color: #2a3144; }
+.driver-card.stage-watching  { border-left-color: #4ade80; }
+.driver-card.stage-soft      { border-left-color: #fbbf24; background: #2a2210; }
+.driver-card.stage-hard      { border-left-color: #f87171; background: #3a1212; animation: pulse 0.8s infinite; }
+.driver-card.stage-external  { border-left-color: #ef4444; background: #4a0e0e; animation: pulse 0.5s infinite; }
+.driver-card.stage-offline   { border-left-color: #6b7280; opacity: 0.55; }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.65; }
 }
 
-.big-status {
-  font-size: 2.4rem;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-  margin-bottom: 8px;
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 4px;
 }
 
-.status-sub {
-  font-size: 0.95rem;
+.vehicle-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #e4e7ee;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.card-status {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #2a3144;
   color: #9aa3b8;
+  white-space: nowrap;
 }
 
-.metrics-grid {
-  grid-column: 1 / -1;
+.stage-watching .card-status { background: #1f3a2a; color: #4ade80; }
+.stage-soft     .card-status { background: #3a3220; color: #fbbf24; }
+.stage-hard     .card-status { background: #4a1a1a; color: #f87171; }
+.stage-external .card-status { background: #5a0e0e; color: #fca5a5; }
+.stage-offline  .card-status { background: #2a3144; color: #9aa3b8; }
+
+.session-id {
+  font-size: 0.65rem;
+  color: #6b7280;
+  font-family: ui-monospace, monospace;
+  margin-bottom: 12px;
+}
+
+.card-metrics {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
-.metric-tile {
-  background: #1a1f2e;
-  padding: 16px 12px;
-  border-radius: 10px;
+.card-metric {
+  background: rgba(0,0,0,0.25);
+  padding: 8px;
+  border-radius: 6px;
   text-align: center;
 }
 
-.metric-tile .label {
-  font-size: 0.65rem;
+.card-metric .label {
+  display: block;
+  font-size: 0.6rem;
   color: #9aa3b8;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
 }
 
-.metric-tile .value {
-  font-size: 1.5rem;
+.card-metric .value {
+  display: block;
+  font-size: 0.95rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
-.gauge-section,
+.card-gps {
+  font-size: 0.72rem;
+  color: #9aa3b8;
+  font-family: ui-monospace, monospace;
+  text-align: center;
+  padding: 6px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 5px;
+}
+
+.card-gps.no-gps {
+  color: #6b7280;
+  font-style: italic;
+}
+
 .map-section {
   background: #1a1f2e;
   padding: 20px;
   border-radius: 12px;
 }
 
-.gauge-section h2,
-.map-section h2,
-.incidents-section h2 {
-  font-size: 0.8rem;
-  color: #9aa3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  margin-bottom: 14px;
-}
-
-.gauge-wrap {
-  position: relative;
-  text-align: center;
-}
-
-.gauge-wrap svg {
-  width: 100%;
-  max-width: 280px;
-  height: auto;
-}
-
-.gauge-text {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 2.2rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-
 #map {
-  height: 240px;
+  height: 360px;
   border-radius: 8px;
   background: #0a0e1a;
 }
 
-.gps-info {
-  margin-top: 10px;
-  font-size: 0.8rem;
-  color: #9aa3b8;
-  font-family: ui-monospace, monospace;
-  text-align: center;
-}
-
 .incidents-section {
-  grid-column: 1 / -1;
   background: #1a1f2e;
   padding: 20px;
   border-radius: 12px;
@@ -183,13 +227,8 @@ main {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.empty {
-  text-align: center;
-  padding: 24px;
-  color: #6b7280;
-  font-size: 0.9rem;
+  max-height: 500px;
+  overflow-y: auto;
 }
 
 .incident {
@@ -224,11 +263,18 @@ main {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 6px;
+  gap: 8px;
+}
+
+.incident-body .vehicle-tag {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e4e7ee;
 }
 
 .badge {
-  font-size: 0.65rem;
-  padding: 4px 10px;
+  font-size: 0.6rem;
+  padding: 3px 8px;
   border-radius: 999px;
   font-weight: 700;
   text-transform: uppercase;
@@ -238,21 +284,21 @@ main {
 }
 
 .incident .time {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: #9aa3b8;
   font-family: ui-monospace, monospace;
 }
 
 .incident .details {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: #cbd5e1;
   margin-top: 4px;
   line-height: 1.5;
 }
 
 @media (max-width: 720px) {
-  main { grid-template-columns: 1fr; }
-  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .cards-grid { grid-template-columns: 1fr; }
   .incident { grid-template-columns: 1fr; }
   .incident .snapshot { width: 100%; height: 160px; }
+  header { flex-direction: column; gap: 10px; align-items: flex-start; }
 }

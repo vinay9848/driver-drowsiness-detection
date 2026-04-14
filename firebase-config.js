@@ -25,7 +25,6 @@ export const firebaseConfig = {
   appId: "1:496645400723:web:2fee76534e4bc746bf4566",
 };
 
-// All driver/watcher pairs that share this session ID see each other.
-// For a single-vehicle MVP, leave as "default". For multiple concurrent
-// vehicles, generate a unique ID per vehicle.
-export const SESSION_ID = "default";
+// Session IDs are now per-vehicle and resolved at runtime in drive/app.js
+// from URL hash > localStorage > random. The watcher subscribes to all
+// sessions, so no central SESSION_ID is needed here.

@@ -1,4 +1,31 @@
-import { firebaseConfig, SESSION_ID } from '../firebase-config.js';
+import { firebaseConfig } from '../firebase-config.js';
+
+function resolveSessionId() {
+  if (location.hash && location.hash.length > 1) {
+    const id = location.hash.slice(1).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32);
+    if (id) {
+      localStorage.setItem('drowsiness-session-id', id);
+      return id;
+    }
+  }
+  let id = localStorage.getItem('drowsiness-session-id');
+  if (!id) {
+    id = Math.random().toString(36).slice(2, 8);
+    localStorage.setItem('drowsiness-session-id', id);
+  }
+  return id;
+}
+
+const SESSION_ID = resolveSessionId();
+document.getElementById('sessionId').textContent = SESSION_ID;
+
+const vehicleNameInput = document.getElementById('vehicleName');
+let vehicleName = localStorage.getItem('drowsiness-vehicle-name') || `Vehicle ${SESSION_ID}`;
+vehicleNameInput.value = vehicleName;
+vehicleNameInput.addEventListener('input', () => {
+  vehicleName = vehicleNameInput.value.trim() || `Vehicle ${SESSION_ID}`;
+  localStorage.setItem('drowsiness-vehicle-name', vehicleName);
+});
 
 const EAR_THRESHOLD = 0.22;
 const MAR_THRESHOLD = 0.6;
@@ -44,6 +71,7 @@ if (firebaseConfigured) {
   onDisconnect(stateRef).set({
     driverOffline: true,
     stage: 'offline',
+    name: vehicleName,
     lastUpdate: Date.now(),
   });
 
@@ -371,6 +399,7 @@ function pushState() {
   if (!running) return;
   sync.sendState({
     stage,
+    name: vehicleName,
     ear: lastEar,
     mar: lastMar,
     gps: lastGps,

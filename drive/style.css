@@ -32,6 +32,50 @@ header {
   margin-bottom: 16px;
 }
 
+.session-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 640px;
+  margin: 0 auto 12px;
+}
+
+.session-controls input {
+  background: #1a1f2e;
+  border: 1px solid #2a3144;
+  color: #e4e7ee;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  flex: 1;
+  min-width: 180px;
+  max-width: 280px;
+}
+
+.session-controls input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.session-id-display {
+  font-size: 0.7rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.session-id-display code {
+  background: #1a1f2e;
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: #9aa3b8;
+  font-size: 0.75rem;
+  font-family: ui-monospace, monospace;
+}
+
 h1 {
   font-size: 1.4rem;
   margin-bottom: 8px;

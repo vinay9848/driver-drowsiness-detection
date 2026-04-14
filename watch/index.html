@@ -3,53 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Driver Watch — Dashboard</title>
+  <title>Driver Watch — Fleet Dashboard</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="setupWarning" class="setup-warning hidden">
-    ⚠ <strong>Backend not configured.</strong> This dashboard will only receive updates from a driver tab in the <em>same browser on the same device</em>. To enable cross-device sync, set up Firebase in <code>firebase-config.js</code>.
+    ⚠ <strong>Backend not configured.</strong> Cross-device sync is disabled — fill in <code>firebase-config.js</code>.
   </div>
 
   <header>
-    <h1>Driver Watch</h1>
-    <div id="connection" class="connection offline">waiting for driver</div>
+    <h1>Driver Watch — Fleet</h1>
+    <div id="fleetStats" class="fleet-stats">0 drivers</div>
   </header>
 
   <main>
-    <section id="statusCard" class="status-card stage-idle">
-      <div class="big-status" id="bigStatus">IDLE</div>
-      <div class="status-sub" id="statusSub">No driver session active</div>
-    </section>
-
-    <section class="metrics-grid">
-      <div class="metric-tile"><div class="label">Stage</div><div class="value" id="stageVal">—</div></div>
-      <div class="metric-tile"><div class="label">EAR</div><div class="value" id="earVal">—</div></div>
-      <div class="metric-tile"><div class="label">MAR</div><div class="value" id="marVal">—</div></div>
-      <div class="metric-tile"><div class="label">Session</div><div class="value" id="sessionVal">—</div></div>
-    </section>
-
-    <section class="gauge-section">
-      <h2>Fatigue level</h2>
-      <div class="gauge-wrap">
-        <svg viewBox="0 0 200 120" id="gaugeSvg">
-          <path d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="#1a1f2e" stroke-width="18" stroke-linecap="round"/>
-          <path id="gaugeFill" d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="#4ade80" stroke-width="18" stroke-linecap="round" stroke-dasharray="0 251"/>
-        </svg>
-        <div class="gauge-text" id="gaugeText">0</div>
+    <section class="cards-section">
+      <h2>Active drivers</h2>
+      <div id="cardsGrid" class="cards-grid">
+        <div class="empty" id="emptyCards">No drivers connected yet. Open <code>/drive/</code> on a device to start a session.</div>
       </div>
     </section>
 
     <section class="map-section">
-      <h2>Live location</h2>
+      <h2>Live fleet map</h2>
       <div id="map"></div>
-      <div class="gps-info" id="gpsInfo">No location yet</div>
     </section>
 
     <section class="incidents-section">
-      <h2>Incidents</h2>
+      <h2>Recent incidents</h2>
       <div id="incidentList" class="incident-list">
         <div class="empty">No incidents recorded.</div>
       </div>
