@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>Driver Drowsiness Detection</title>
+  <link rel="stylesheet" href="/drive/style.css">
+</head>
+<body>
+  <header>
+    <h1>Driver Drowsiness Detection</h1>
+    <p id="status" class="status idle">Idle</p>
+  </header>
+
+  <main>
+    <div class="video-container">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="overlay"></canvas>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <span class="label">EAR</span>
+        <span id="ear" class="value">&mdash;</span>
+      </div>
+      <div class="metric">
+        <span class="label">MAR</span>
+        <span id="mar" class="value">&mdash;</span>
+      </div>
+      <div class="metric">
+        <span class="label">Closed frames</span>
+        <span id="closed" class="value">0</span>
+      </div>
+    </div>
+
+    <button id="startBtn" class="start-btn">Start monitoring</button>
+  </main>
+
+  <audio id="alarm" src="/drive/assets/alarm.mp3" preload="auto" loop></audio>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+  <script src="/drive/app.js"></script>
+</body>
+</html>

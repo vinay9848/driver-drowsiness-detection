@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.venv/
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Old Streamlit prototype artifacts (regenerated at runtime)
+ear_graph.png
+Driver_Report.pdf
+Driver_Fatigue_Report.pdf
+Fatigue_Report.pdf
+
+# Large dlib model — replaced by MediaPipe in driver-app/
+shape_predictor_68_face_landmarks.dat
+
+# Local secrets (none yet, but reserve the names)
+.env
+.env.local

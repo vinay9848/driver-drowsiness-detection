@@ -1,0 +1,244 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #0a0e1a;
+  color: #e4e7ee;
+  min-height: 100vh;
+  padding: 20px;
+  -webkit-font-smoothing: antialiased;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1100px;
+  margin: 0 auto 20px;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.connection {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+}
+
+.connection.online  { background: #1f3a2a; color: #4ade80; }
+.connection.offline { background: #4a1a1a; color: #f87171; }
+
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.status-card {
+  grid-column: 1 / -1;
+  padding: 32px;
+  border-radius: 14px;
+  text-align: center;
+  border: 2px solid transparent;
+  transition: background 0.3s, border-color 0.3s;
+}
+
+.status-card.stage-idle      { background: #1a1f2e; border-color: #2a3144; }
+.status-card.stage-watching  { background: #14271c; border-color: #1f3a2a; }
+.status-card.stage-soft      { background: #2a2210; border-color: #5a4a18; }
+.status-card.stage-hard      { background: #3a1212; border-color: #6a1c1c; animation: pulse 0.8s infinite; }
+.status-card.stage-external  { background: #4a0e0e; border-color: #8a1010; animation: pulse 0.5s infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.65; }
+}
+
+.big-status {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  margin-bottom: 8px;
+}
+
+.status-sub {
+  font-size: 0.95rem;
+  color: #9aa3b8;
+}
+
+.metrics-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.metric-tile {
+  background: #1a1f2e;
+  padding: 16px 12px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.metric-tile .label {
+  font-size: 0.65rem;
+  color: #9aa3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 6px;
+}
+
+.metric-tile .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.gauge-section,
+.map-section {
+  background: #1a1f2e;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.gauge-section h2,
+.map-section h2,
+.incidents-section h2 {
+  font-size: 0.8rem;
+  color: #9aa3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 14px;
+}
+
+.gauge-wrap {
+  position: relative;
+  text-align: center;
+}
+
+.gauge-wrap svg {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+}
+
+.gauge-text {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 2.2rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+#map {
+  height: 240px;
+  border-radius: 8px;
+  background: #0a0e1a;
+}
+
+.gps-info {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: #9aa3b8;
+  font-family: ui-monospace, monospace;
+  text-align: center;
+}
+
+.incidents-section {
+  grid-column: 1 / -1;
+  background: #1a1f2e;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.incident-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empty {
+  text-align: center;
+  padding: 24px;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.incident {
+  background: #0a0e1a;
+  border-left: 4px solid #f87171;
+  padding: 14px;
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.incident .snapshot {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #1a1f2e;
+}
+
+.incident .snapshot.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: #6b7280;
+}
+
+.incident-body .header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.badge {
+  font-size: 0.65rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #5a0e0e;
+  color: #fca5a5;
+}
+
+.incident .time {
+  font-size: 0.78rem;
+  color: #9aa3b8;
+  font-family: ui-monospace, monospace;
+}
+
+.incident .details {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+  main { grid-template-columns: 1fr; }
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .incident { grid-template-columns: 1fr; }
+  .incident .snapshot { width: 100%; height: 160px; }
+}
