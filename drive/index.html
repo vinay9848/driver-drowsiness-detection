@@ -57,8 +57,12 @@
         <span class="location-source-label">Source: <span id="locationSource">searching&hellip;</span></span>
         <button id="useGpsBtn" class="link-btn">Use device GPS</button>
       </div>
+      <div class="location-search">
+        <input id="citySearch" type="text" placeholder="Type a city or place (e.g. Bangalore)" autocomplete="off">
+        <button id="citySearchBtn" class="link-btn primary">Search</button>
+      </div>
       <div id="driverMap" class="driver-map"></div>
-      <p class="location-hint">Tap (or drag the pin) to set your exact location if the auto-detected one is wrong.</p>
+      <p class="location-hint">Search a city above, tap the map, or drag the pin to set your exact location.</p>
     </section>
 
     <button id="startBtn" class="start-btn">Start monitoring</button>

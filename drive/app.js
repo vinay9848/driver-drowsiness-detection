@@ -312,12 +312,47 @@ let driverMarker = null;
 let driverMapCentered = false;
 
 function initDriverMap() {
-  if (!window.L || driverMap) return;
-  driverMap = L.map('driverMap', { zoomControl: true, attributionControl: false }).setView([20.5937, 78.9629], 4);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(driverMap);
-  driverMap.on('click', (e) => {
-    setManualLocation(e.latlng.lat, e.latlng.lng, true);
-  });
+  if (driverMap) return;
+  if (!window.L) {
+    console.error('Leaflet not loaded — cannot init driver map');
+    return;
+  }
+  try {
+    driverMap = L.map('driverMap', { zoomControl: true, attributionControl: false }).setView([20.5937, 78.9629], 4);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(driverMap);
+    driverMap.on('click', (e) => {
+      setManualLocation(e.latlng.lat, e.latlng.lng, true);
+    });
+    setTimeout(() => driverMap && driverMap.invalidateSize(), 100);
+    setTimeout(() => driverMap && driverMap.invalidateSize(), 500);
+    console.log('Driver map initialized');
+  } catch (err) {
+    console.error('Driver map init failed:', err);
+  }
+}
+
+async function searchCity(query) {
+  const q = query.trim();
+  if (!q) return;
+  console.log('City search:', q);
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`;
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const results = await res.json();
+    if (!results || results.length === 0) {
+      alert(`No results for "${q}". Try a different search term.`);
+      return;
+    }
+    const r = results[0];
+    const lat = parseFloat(r.lat);
+    const lon = parseFloat(r.lon);
+    console.log('City search result:', r.display_name, lat, lon);
+    setManualLocation(lat, lon, true);
+  } catch (e) {
+    console.error('City search failed:', e);
+    alert(`Search failed: ${e.message}\n\nTry tapping the map manually, or check your network.`);
+  }
 }
 
 function placeDriverMarker(lat, lon) {
@@ -473,34 +508,55 @@ async function startGps() {
   );
 }
 
-document.getElementById('useGpsBtn').addEventListener('click', () => {
-  if (!('geolocation' in navigator)) {
-    alert('Geolocation is not supported by this browser.');
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      localStorage.removeItem('drowsiness-manual-location');
-      lastGps = {
-        lat: pos.coords.latitude,
-        lon: pos.coords.longitude,
-        accuracy: pos.coords.accuracy,
-        source: 'gps',
-      };
-      driverMapCentered = false;
-      updateLocationDisplay();
-      console.log('Device GPS:', pos.coords.latitude, pos.coords.longitude);
-    },
-    err => {
-      alert(`Could not get device GPS: ${err.message}\n\nClick on the map to set your location manually instead.`);
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
-});
+try {
+  document.getElementById('useGpsBtn').addEventListener('click', () => {
+    if (!('geolocation' in navigator)) {
+      alert('Geolocation is not supported by this browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        localStorage.removeItem('drowsiness-manual-location');
+        lastGps = {
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          source: 'gps',
+        };
+        driverMapCentered = false;
+        updateLocationDisplay();
+        console.log('Device GPS:', pos.coords.latitude, pos.coords.longitude);
+      },
+      err => {
+        alert(`Could not get device GPS: ${err.message}\n\nUse the search box or tap the map to set your location manually.`);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  });
 
-initDriverMap();
-loadSavedManualLocation();
-updateLocationDisplay();
+  const citySearchInput = document.getElementById('citySearch');
+  document.getElementById('citySearchBtn').addEventListener('click', () => {
+    searchCity(citySearchInput.value);
+  });
+  citySearchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      searchCity(citySearchInput.value);
+    }
+  });
+
+  initDriverMap();
+  loadSavedManualLocation();
+  updateLocationDisplay();
+
+  if (!lastGps) {
+    fetchIpLocation().then(ok => {
+      if (!ok) console.warn('Initial IP location fetch failed; user can search or tap manually');
+    });
+  }
+} catch (initErr) {
+  console.error('Location init failed:', initErr);
+}
 
 function pushState() {
   if (!running) return;

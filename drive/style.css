@@ -207,8 +207,38 @@ canvas {
 }
 .link-btn:hover { background: #2a3144; border-color: #3b82f6; }
 
+.location-search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.location-search input {
+  flex: 1;
+  background: #0a0e1a;
+  border: 1px solid #2a3144;
+  color: #e4e7ee;
+  border-radius: 6px;
+  padding: 9px 12px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  min-width: 0;
+}
+
+.location-search input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.link-btn.primary {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+.link-btn.primary:hover { background: #2563eb; border-color: #2563eb; }
+
 .driver-map {
-  height: 200px;
+  height: 220px;
   border-radius: 6px;
   background: #0a0e1a;
   cursor: crosshair;
