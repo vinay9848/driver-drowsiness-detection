@@ -16,13 +16,13 @@
 //     the rules in the Firebase console.
 
 export const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID",
+  apiKey: "AIzaSyBQOKNTFTJKiZDjLSGaVYf7EeowWBzVi9s",
+  authDomain: "drowsiness-detection-b6d15.firebaseapp.com",
+  databaseURL: "https://drowsiness-detection-b6d15-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "drowsiness-detection-b6d15",
+  storageBucket: "drowsiness-detection-b6d15.firebasestorage.app",
+  messagingSenderId: "496645400723",
+  appId: "1:496645400723:web:2fee76534e4bc746bf4566",
 };
 
 // All driver/watcher pairs that share this session ID see each other.
