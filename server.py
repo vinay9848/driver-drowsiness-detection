@@ -32,33 +32,27 @@ def broadcast(message: dict) -> None:
 
 @app.route("/")
 def index():
-    return (
-        '<html><body style="font-family:sans-serif;background:#0a0e1a;color:#e4e7ee;'
-        'padding:40px;text-align:center"><h1>Driver Drowsiness Detection</h1>'
-        '<p><a style="color:#3b82f6" href="/drive">Open driver app</a></p>'
-        '<p><a style="color:#3b82f6" href="/watch">Open watcher dashboard</a></p>'
-        "</body></html>"
-    )
+    return send_from_directory(".", "index.html")
 
 
-@app.route("/drive")
+@app.route("/drive/")
 def drive_index():
-    return send_from_directory("driver-app", "index.html")
+    return send_from_directory("drive", "index.html")
 
 
 @app.route("/drive/<path:filename>")
 def drive_static(filename):
-    return send_from_directory("driver-app", filename)
+    return send_from_directory("drive", filename)
 
 
-@app.route("/watch")
+@app.route("/watch/")
 def watch_index():
-    return send_from_directory("dashboard", "index.html")
+    return send_from_directory("watch", "index.html")
 
 
 @app.route("/watch/<path:filename>")
 def watch_static(filename):
-    return send_from_directory("dashboard", filename)
+    return send_from_directory("watch", filename)
 
 
 @app.route("/api/state", methods=["POST"])

@@ -25,6 +25,8 @@ const STAGE = {
   EXTERNAL: 'external',
 };
 
+const channel = new BroadcastChannel('drowsiness-v1');
+
 const video    = document.getElementById('video');
 const canvas   = document.getElementById('overlay');
 const ctx      = canvas.getContext('2d');
@@ -256,27 +258,21 @@ function startGps() {
   );
 }
 
-async function pushState() {
+function pushState() {
   if (!running) return;
-  const payload = {
-    stage,
-    ear: lastEar,
-    mar: lastMar,
-    gps: lastGps,
-    sessionTime: sessionStartTime ? (performance.now() - sessionStartTime) / 1000 : 0,
-  };
-  try {
-    await fetch('/api/state', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-  } catch (e) {
-    console.warn('state push failed:', e.message);
-  }
+  channel.postMessage({
+    type: 'state',
+    data: {
+      stage,
+      ear: lastEar,
+      mar: lastMar,
+      gps: lastGps,
+      sessionTime: sessionStartTime ? (performance.now() - sessionStartTime) / 1000 : 0,
+    },
+  });
 }
 
-async function captureAndPushIncident() {
+function captureAndPushIncident() {
   const now = performance.now();
   if (now - lastIncidentTime < 5000) return;
   lastIncidentTime = now;
@@ -290,23 +286,19 @@ async function captureAndPushIncident() {
     snapshot = c.toDataURL('image/jpeg', 0.6);
   }
 
-  const payload = {
-    stage: 'external',
-    ear: lastEar,
-    mar: lastMar,
-    gps: lastGps,
-    sessionTime: sessionStartTime ? (performance.now() - sessionStartTime) / 1000 : 0,
-    snapshot,
-  };
-  try {
-    await fetch('/api/incident', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-  } catch (e) {
-    console.warn('incident push failed:', e.message);
-  }
+  channel.postMessage({
+    type: 'incident',
+    data: {
+      id: `inc-${Date.now()}`,
+      timestamp: Date.now() / 1000,
+      stage: 'external',
+      ear: lastEar,
+      mar: lastMar,
+      gps: lastGps,
+      sessionTime: sessionStartTime ? (performance.now() - sessionStartTime) / 1000 : 0,
+      snapshot,
+    },
+  });
 }
 
 async function processLoop() {

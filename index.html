@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Driver Drowsiness Detection</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0a0e1a;
+      color: #e4e7ee;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container { text-align: center; max-width: 520px; }
+    h1 { font-size: 1.8rem; margin-bottom: 12px; font-weight: 700; }
+    p { color: #9aa3b8; margin-bottom: 32px; line-height: 1.55; font-size: 0.95rem; }
+    .buttons { display: grid; gap: 14px; }
+    a {
+      display: block;
+      padding: 22px;
+      background: #1a1f2e;
+      color: #e4e7ee;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      border: 2px solid #2a3144;
+      transition: border-color 0.18s, background 0.18s;
+    }
+    a:hover { border-color: #3b82f6; background: #1f2937; }
+    a .label {
+      display: block;
+      font-size: 0.7rem;
+      color: #9aa3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-top: 6px;
+      font-weight: 500;
+    }
+    .note {
+      margin-top: 28px;
+      font-size: 0.78rem;
+      color: #6b7280;
+      line-height: 1.55;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Driver Drowsiness Detection</h1>
+    <p>Open the driver app to start monitoring with your camera, and the watcher dashboard in another tab to see live status.</p>
+    <div class="buttons">
+      <a href="drive/">Driver App<span class="label">Camera, alarm, voice alerts</span></a>
+      <a href="watch/">Watcher Dashboard<span class="label">Live status, fatigue, location</span></a>
+    </div>
+    <p class="note">Both pages must be open in tabs of the same browser on the same device for the dashboard to receive live updates.</p>
+  </div>
+</body>
+</html>

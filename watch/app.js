@@ -14,9 +14,12 @@ const STAGE_SUB = {
   external: 'EMERGENCY — driver unresponsive',
 };
 
+const OFFLINE_AFTER_MS = 5000;
+
 let map = null;
 let marker = null;
 let mapCentered = false;
+let lastStateAt = 0;
 
 const elBigStatus  = document.getElementById('bigStatus');
 const elStatusSub  = document.getElementById('statusSub');
@@ -36,9 +39,9 @@ function initMap() {
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 }
 
-function setConnection(state) {
-  elConn.textContent = state;
-  elConn.className = `connection ${state === 'connected' ? 'online' : 'offline'}`;
+function setConnection(text, online) {
+  elConn.textContent = text;
+  elConn.className = `connection ${online ? 'online' : 'offline'}`;
 }
 
 function fmtSession(seconds) {
@@ -82,10 +85,11 @@ function applyState(state) {
       marker.setLatLng(ll);
     }
     if (!mapCentered) {
-      map.setView(ll, 15);
+      map.setView(ll, 13);
       mapCentered = true;
     }
-    elGpsInfo.textContent = `${state.gps.lat.toFixed(5)}, ${state.gps.lon.toFixed(5)} (±${Math.round(state.gps.accuracy || 0)}m)`;
+    const src = state.gps.source ? ` · ${state.gps.source}` : '';
+    elGpsInfo.textContent = `${state.gps.lat.toFixed(5)}, ${state.gps.lon.toFixed(5)}${src}`;
   }
 }
 
@@ -121,39 +125,24 @@ function addIncident(inc) {
   elIncidents.prepend(renderIncident(inc));
 }
 
-function loadInitial(snapshot) {
-  applyState(snapshot.state);
-  if (snapshot.incidents && snapshot.incidents.length > 0) {
-    elIncidents.innerHTML = '';
-    snapshot.incidents.forEach(addIncident);
+const channel = new BroadcastChannel('drowsiness-v1');
+channel.onmessage = (e) => {
+  const msg = e.data;
+  if (msg.type === 'state') {
+    lastStateAt = Date.now();
+    setConnection('driver active', true);
+    applyState(msg.data);
+  } else if (msg.type === 'incident') {
+    addIncident(msg.data);
   }
-}
+};
 
-let es = null;
-function connect() {
-  if (es) es.close();
-  es = new EventSource('/api/stream');
-  es.onopen = () => setConnection('connected');
-  es.onerror = () => {
-    setConnection('disconnected');
-    es.close();
-    setTimeout(connect, 3000);
-  };
-  es.onmessage = (e) => {
-    try {
-      const msg = JSON.parse(e.data);
-      if (msg.type === 'snapshot')      loadInitial(msg.data);
-      else if (msg.type === 'state')    applyState(msg.data);
-      else if (msg.type === 'incident') addIncident(msg.data);
-      else if (msg.type === 'reset') {
-        elIncidents.innerHTML = '<div class="empty">No incidents recorded.</div>';
-        applyState({ stage: 'idle' });
-      }
-    } catch (err) {
-      console.warn('bad message', err);
-    }
-  };
-}
+setInterval(() => {
+  if (lastStateAt === 0) return;
+  if (Date.now() - lastStateAt > OFFLINE_AFTER_MS) {
+    setConnection('driver offline', false);
+  }
+}, 1000);
 
 initMap();
-connect();
+setConnection('waiting for driver', false);
