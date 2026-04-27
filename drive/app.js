@@ -51,6 +51,7 @@ const STAGE = {
   SOFT:     'soft',
   HARD:     'hard',
   EXTERNAL: 'external',
+  STOPPED:  'stopped',
 };
 
 const firebaseConfigured =
@@ -102,6 +103,8 @@ const alarmAudio = document.getElementById('alarm');
 
 let faceMesh = null;
 let running = false;
+let cameraStream = null;
+let pushStateTimer = null;
 
 let dangerSince   = null;
 let recoverySince = null;
@@ -174,6 +177,10 @@ function transitionTo(newStage) {
 
   if (newStage === STAGE.WATCHING) {
     setStatus('Watching', 'watching');
+    stopAlarm();
+    speechSynthesis.cancel();
+  } else if (newStage === STAGE.STOPPED) {
+    setStatus('Stopped', 'idle');
     stopAlarm();
     speechSynthesis.cancel();
   } else if (newStage === STAGE.SOFT) {
@@ -273,6 +280,7 @@ async function startCamera() {
     video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
     audio: false,
   });
+  cameraStream = stream;
   video.srcObject = stream;
   await new Promise(resolve => {
     video.onloadedmetadata = () => {
@@ -605,22 +613,24 @@ async function processLoop() {
   requestAnimationFrame(processLoop);
 }
 
-startBtn.addEventListener('click', async () => {
+async function startMonitoring() {
   startBtn.disabled = true;
   setStatus('Loading model…', 'loading');
   startBtn.textContent = 'Loading…';
 
   try {
-    faceMesh = new FaceMesh({
-      locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
-    });
-    faceMesh.setOptions({
-      maxNumFaces: 1,
-      refineLandmarks: true,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5,
-    });
-    faceMesh.onResults(onResults);
+    if (!faceMesh) {
+      faceMesh = new FaceMesh({
+        locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
+      });
+      faceMesh.setOptions({
+        maxNumFaces: 1,
+        refineLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      });
+      faceMesh.onResults(onResults);
+    }
 
     setStatus('Starting camera…', 'loading');
     await startCamera();
@@ -629,13 +639,61 @@ startBtn.addEventListener('click', async () => {
     running = true;
     sessionStartTime = performance.now();
     transitionTo(STAGE.WATCHING);
-    startBtn.textContent = 'Monitoring';
+    startBtn.textContent = 'Stop monitoring';
+    startBtn.disabled = false;
     processLoop();
-    setInterval(pushState, PUSH_INTERVAL_MS);
+    pushStateTimer = setInterval(pushState, PUSH_INTERVAL_MS);
   } catch (err) {
     console.error(err);
     setStatus(`Error: ${err.message}`, 'error');
     startBtn.disabled = false;
     startBtn.textContent = 'Start monitoring';
   }
+}
+
+function stopMonitoring() {
+  if (!running) return;
+  running = false;
+
+  if (pushStateTimer !== null) {
+    clearInterval(pushStateTimer);
+    pushStateTimer = null;
+  }
+
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  video.srcObject = null;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  dangerSince = null;
+  recoverySince = null;
+  lastFaceSeen = null;
+  lastEar = null;
+  lastMar = null;
+  earEl.textContent = '—';
+  marEl.textContent = '—';
+  closedEl.textContent = '—';
+
+  transitionTo(STAGE.STOPPED);
+
+  sync.sendState({
+    stage: STAGE.STOPPED,
+    name: vehicleName,
+    ear: null,
+    mar: null,
+    gps: lastGps,
+    sessionTime: sessionStartTime ? (performance.now() - sessionStartTime) / 1000 : 0,
+    lastUpdate: Date.now(),
+  });
+
+  sessionStartTime = null;
+  startBtn.textContent = 'Start monitoring';
+  startBtn.disabled = false;
+}
+
+startBtn.addEventListener('click', () => {
+  if (running) stopMonitoring();
+  else startMonitoring();
 });

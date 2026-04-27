@@ -111,6 +111,7 @@ main {
 .driver-card.stage-hard      { border-left-color: #f87171; background: #3a1212; animation: pulse 0.8s infinite; }
 .driver-card.stage-external  { border-left-color: #ef4444; background: #4a0e0e; animation: pulse 0.5s infinite; }
 .driver-card.stage-offline   { border-left-color: #6b7280; opacity: 0.55; }
+.driver-card.stage-stopped   { border-left-color: #94a3b8; opacity: 0.7; }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
@@ -152,6 +153,7 @@ main {
 .stage-hard     .card-status { background: #4a1a1a; color: #f87171; }
 .stage-external .card-status { background: #5a0e0e; color: #fca5a5; }
 .stage-offline  .card-status { background: #2a3144; color: #9aa3b8; }
+.stage-stopped  .card-status { background: #2a3144; color: #cbd5e1; }
 
 .session-id {
   font-size: 0.65rem;

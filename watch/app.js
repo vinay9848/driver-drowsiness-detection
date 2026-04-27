@@ -1,5 +1,9 @@
 import { firebaseConfig } from '../firebase-config.js';
 
+const INCIDENT_MAX_AGE_MS = 4 * 60 * 60 * 1000;
+
+let deleteIncidentFn = null;
+
 const STAGE_COLORS = {
   idle:     '#9aa3b8',
   watching: '#4ade80',
@@ -7,6 +11,7 @@ const STAGE_COLORS = {
   hard:     '#f87171',
   external: '#ef4444',
   offline:  '#6b7280',
+  stopped:  '#94a3b8',
 };
 
 const elFleetStats = document.getElementById('fleetStats');
@@ -84,9 +89,10 @@ function updateCard(sessionId, state) {
   const name = state.name || `Vehicle ${sessionId}`;
   card.querySelector('.vehicle-name').textContent = name;
   card.querySelector('.card-status').textContent = stage.toUpperCase();
-  card.querySelector('.ear-val').textContent  = stage === 'offline' ? '—' : fmtNum(state.ear);
-  card.querySelector('.mar-val').textContent  = stage === 'offline' ? '—' : fmtNum(state.mar);
-  card.querySelector('.time-val').textContent = stage === 'offline' ? '—' : fmtSession(state.sessionTime);
+  const inactive = stage === 'offline' || stage === 'stopped';
+  card.querySelector('.ear-val').textContent  = inactive ? '—' : fmtNum(state.ear);
+  card.querySelector('.mar-val').textContent  = inactive ? '—' : fmtNum(state.mar);
+  card.querySelector('.time-val').textContent = inactive ? '—' : fmtSession(state.sessionTime);
 
   const gpsEl = card.querySelector('.card-gps');
   if (state.gps && state.gps.lat) {
@@ -171,6 +177,8 @@ function renderIncident(inc) {
 
   const div = document.createElement('div');
   div.className = 'incident';
+  div.dataset.sessionId = inc._sessionId || '';
+  div.dataset.incidentKey = inc._key || '';
   div.innerHTML = `
     ${snapshotHtml}
     <div class="incident-body">
@@ -189,9 +197,27 @@ function renderIncident(inc) {
 
 function addIncident(inc) {
   if (!inc) return;
+
+  const ageMs = Date.now() - (inc.timestamp || 0) * 1000;
+  if (ageMs >= INCIDENT_MAX_AGE_MS) {
+    if (deleteIncidentFn) deleteIncidentFn(inc._sessionId, inc._key);
+    return;
+  }
+
   const empty = elIncidents.querySelector('.empty');
   if (empty) empty.remove();
   elIncidents.prepend(renderIncident(inc));
+
+  const remainingMs = Math.max(0, INCIDENT_MAX_AGE_MS - ageMs);
+  setTimeout(() => {
+    if (deleteIncidentFn) deleteIncidentFn(inc._sessionId, inc._key);
+  }, remainingMs);
+}
+
+function removeIncidentNode(key) {
+  if (!key) return;
+  const node = elIncidents.querySelector(`[data-incident-key="${CSS.escape(key)}"]`);
+  if (node) node.remove();
 }
 
 initMap();
@@ -203,12 +229,18 @@ const firebaseConfigured =
 
 if (firebaseConfigured) {
   const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js');
-  const { getDatabase, ref, onValue, onChildAdded, onChildRemoved, query, limitToLast }
+  const { getDatabase, ref, onValue, onChildAdded, onChildRemoved, remove, query, limitToLast }
     = await import('https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js');
 
   const fbApp = initializeApp(firebaseConfig);
   const db = getDatabase(fbApp);
   const sessionsRef = ref(db, 'sessions');
+
+  deleteIncidentFn = (sessionId, key) => {
+    if (!sessionId || !key) return;
+    remove(ref(db, `sessions/${sessionId}/incidents/${key}`))
+      .catch(e => console.warn('incident remove failed:', e.message));
+  };
 
   function subscribeToSession(sessionId) {
     if (subscribedSessions.has(sessionId)) return;
@@ -224,8 +256,12 @@ if (firebaseConfigured) {
     onChildAdded(incRef, (snap) => {
       const inc = snap.val() || {};
       inc._sessionId = sessionId;
+      inc._key = snap.key;
       inc._vehicleName = (drivers.get(sessionId) || {}).name || `Vehicle ${sessionId}`;
       addIncident(inc);
+    });
+    onChildRemoved(incRef, (snap) => {
+      removeIncidentNode(snap.key);
     });
   }
 

@@ -35,6 +35,11 @@ def index():
     return send_from_directory(".", "index.html")
 
 
+@app.route("/firebase-config.js")
+def firebase_config():
+    return send_from_directory(".", "firebase-config.js")
+
+
 @app.route("/drive/")
 def drive_index():
     return send_from_directory("drive", "index.html")
